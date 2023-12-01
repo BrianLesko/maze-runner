@@ -31,7 +31,8 @@ class gui():
             with col6: # BLOG Visual Study Code
                 "." #"[![VSC]()](https://www.visualstudycode.com/)"
 
-    def clean_format(self):
+    def clean_format(self, wide=False):
+        if wide == True: st.set_page_config(layout='wide')
         hide_st_style = """
                 <style>
                 #MainMenu {visibility: hidden;}
@@ -47,3 +48,7 @@ class gui():
             st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
         for msg in st.session_state.messages:
             st.chat_message(msg["role"]).write(msg["content"])
+
+    def quick_setup(self,wide=False, text="In this code we ... "):
+        self.clean_format(wide)
+        self.about(text)

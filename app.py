@@ -12,87 +12,74 @@ import customize_gui # Custom class by Brian Lesko for streamlit GUI modificatio
 gui = customize_gui.gui()
 DualSense = dualsense.DualSense
 
-vendorID = int("0x054C", 16)
-productID = int("0x0CE6", 16)
+vendorID, productID = int("0x054C", 16), int("0x0CE6", 16)
 
 def main():
-    st.set_page_config(layout='wide')
-    gui.clean_format()
+    gui.clean_format(wide = True)
     gui.about(text = "This code implements a maze game with a wired ps5 controller, use the touchpad to navigate the maze.")
-    Title = st.empty()
+    
+    with st.spinner(text="Setting up the app..."): 
+        col1, col2, col3 = st.columns([1,2.5,1])
+        with col2: Title = st.empty()
+        with Title: st.title("Get ready")
+        progress_bar = st.progress(0)
+        image_placeholder = st.empty()
 
-    ds = DualSense(vendorID,productID)
-    ds.connect()
-    progress_bar = st.progress(0)
-    text = st.empty()
-    image_placeholder = st.empty()
+    with st.spinner(text="Connecting to your controller..."): 
+        ds = DualSense(vendorID,productID)
+        ds.connect()
+        # Create an empty image
+        n, m = 1080-10, 1900-30 # x is 40 - 1900 y is 1100 - 10 
+        pixels = np.ones((n,m))
+    with st.spinner(text="Importing the level..."): 
+        # Create the maze walls by importing a jpg image
+        maze = plt.imread("maze-01.jpg")
+        from skimage.transform import resize
+        resized_maze=resize(maze, (n, m))
+        maze=resized_maze
+        greens=resized_maze[:,:,1]  # only use the second channel of the image
+    with st.spinner(text="Creating walls..."): 
+        wall_coordinates=[]   # Wall Coordinates are created from black colors
+        for i in range(n):
+            for j in range(m):
+                if maze[:,:,0][i][j] > .5 and maze[:,:,1][i][j] >.5 and maze[:,:,2][i][j] >.5 : # if the pixel is black
+                    wall_coordinates.append((i,j))
+    with st.spinner(text="Placing the goal"):
+        goal_coordinates = []   # Goal Coordinates are created from green colors
+        for i in range(n):
+            for j in range(m):
+                if maze[:,:,0][i][j] < .5 and maze[:,:,1][i][j] >.5 and maze[:,:,2][i][j] < .5 :  # green color
+                    goal_coordinates.append((i,j))
 
-    # Create an empty image
-    n = 1080-10 # y is 1100 - 10 
-    m = 1900-30 # x is 40 - 1900
-    pixels = np.ones((n,m))
-
-    # Create the maze walls by importing a jpg image
-    maze = plt.imread("maze-01.jpg")
-    from skimage.transform import resize
-    resized_maze = resize(maze, (n, m))
-    maze = resized_maze[:,:,0] # only use the first channel of the image
-    greens = greens = resized_maze[:,:,1]  # only use the second channel of the image
-
-    # Create a list of the maze wall coordinates
-    wall_coordinates = []
-    for i in range(n):
-        for j in range(m):
-            if maze[i][j] == 0:
-                wall_coordinates.append((i,j))
-
-    # Create a list of goal coordinates based on red pixels
-    goal = []
-    for i in range(n):
-        for j in range(m):
-            if greens[i][j] > 0.5 and all(resized_maze[i][j][[0, 2]] < 0.2):  # green color
-                goal.append((i,j))
-
-    pixels = pixels * maze # multiply the maze by the empty image to create the maze walls
+    pixels = maze # multiply the maze by the empty image to create the maze walls
+    with Title: st.title("Hurry, finish the maze!")
 
     loops = 1000
     pixel_size = 10
+    win = 0
     for i in range(loops): 
         ds.receive()
         ds.updateTouchpad(n=1)
         y, x = ds.touchpad_x[0], ds.touchpad_y[0]
         y1, x1 = ds.touchpad1_x[0], ds.touchpad1_y[0]
-        # first touch detection and pixel drawing
+
         if ds.touchpad_isActive:
+            # Draw Pixels
             if 0 <= x < n and 0 <= y < m:  # Check that the touchpad values are within the image dimensions
                 for dx in range(-pixel_size//2 + 1, pixel_size//2 + 1):
                     for dy in range(-pixel_size//2 + 1, pixel_size//2 + 1):
                         if 0 <= x + dx < n and 0 <= y + dy < m:  # Check that the coordinates are within the image dimensions
                             pixels[x + dx][y + dy] = max(0, pixels[x + dx][y + dy] - 1)  # Subtract 1 from the pixel value, but don't go below 0
-        # second finger touch detection and pixel drawing
-        if ds.touchpad1_isActive:
-            if 0 <= x1 < n and 0 <= y1 < m:
-                for dx in range(-pixel_size//2 + 1, pixel_size//2 + 1):
-                    for dy in range(-pixel_size//2 + 1, pixel_size//2 + 1):
-                        if 0 <= x1 + dx < n and 0 <= y1 + dy < m:
-                            pixels[x1 + dx][y1 + dy] = max(0, pixels[x1 + dx][y1 + dy] - 1)
-
-         # Check if the current touches are on a wall
-        if ds.touchpad_isActive:
-            if (x,y) in wall_coordinates:
-                ds.init_outReport()
+            if (x,y) in wall_coordinates:   # You lose
                 ds.rumble()
                 ds.lights(rgb=(255,0,0))
-                ds.send_outReport()
             else:
-                ds.init_outReport()
                 ds.lights(rgb=(0,255,0))
-                ds.send_outReport()
-
-        # Check if the current touch is in the goal
-        if ds.touchpad_isActive:
-            if (x,y) in goal:
-                st.balloons() 
+            if (x,y) in goal_coordinates:   # You win
+                with Title: st.title("You won!")
+                if win == 0: st.balloons() 
+                win = 1
+            ds.send_outReport()
         
         progress_bar.progress((i + 1)/loops)
         with image_placeholder: st.image(pixels, use_column_width=True)
