@@ -2,3 +2,4 @@ libusb
 hidapi
 streamlit
 matplotlib
+scikit-image # for the resize function

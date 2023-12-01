@@ -59,6 +59,9 @@ class DualSense:
         self.R3 = False
         self.L3 = False
 
+        # Initialize sending data back to the controller (lights, motors, etc)
+        self.outReport = None
+
     def disconnect(self):
         self.device.close()
 
@@ -191,18 +194,42 @@ class DualSense:
         self.battery_state = BATTERY_STATES.get(state, "POWER_SUPPLY_STATUS_UNKNOWN")
         self.battery_level = min((battery & 0x0F) * 10 + 5, 100)
 
-    def format_data_to_send(self):
-        outReport = [0] * 64
-        OUTPUT_REPORT_USB = 0x02
-        outReport[0] = OUTPUT_REPORT_USB
-        outReport[1] = 0xff # [1]
-        outReport[2] = 0x1 | 0x2 | 0x4 | 0x10 | 0x40 # [2] # This is a flag for what is being sent, not sure what the values mean
-        outReport[3] = self.rightMotor # right low freq motor 0-255 # [3]
-        outReport[4] = self.leftMotor # left low freq motor 0-255 # [4]
-        # outReport[5] - outReport[8] audio related
-        outReport[9] = self.audio.microphone_led # [9] #set Micrphone LED, setting doesnt effect microphone settings
-        outReport[10] = 0x10 if self.audio.microphone_mute is True else 0x00
-        # ...
+    def init_outReport(self):
+        if self.outReport is None:
+            bytes = [0] * 64
+            bytes[0] = 0x02 # This byte says "USB"     BT = 0x0? 
+            bytes[1] = 0xff # [1]
+            bytes[2] = 0x1 | 0x2 | 0x4 | 0x10 | 0x40 # [2] # This is a flag for what is being sent, not sure what the values mean
+            # bytes[5] - bytes[8] audio related
+            #bytes[9] = self.audio.microphone_led # [9] #set Micrphone LED, setting doesnt effect microphone settings
+            #bytes[10] = 0x10 if self.audio.microphone_mute is True else 0x00
+            # bytes[11] - bytes[20] Right Trigger
+            # bytes[21] - bytes[31] Left Trigger
+            # bytes[39] - bytes[47] Touchpad
+            self.outReport = bytes
+    
+    def clear_outReport(self):
+        self.outReport = None
+        bytes = [0] * 64
+        self.send(bytes)
+
+    def send_outReport(self):
+        self.send(self.outReport)
+
+    def rumble(self, intensity = 100):
+        if self.outReport is None: self.init_outReport()
+        self.outReport[3] = intensity # right low freq motor 0-255 # [3]
+        self.outReport[4] = intensity # left low freq motor 0-255 # [4]
+
+    def lights(self, brightness = 1, rgb = (0,100,0), mode = 0, pulse = 0 ):
+        if self.outReport is None: self.init_outReport()
+        self.outReport[39] = mode  # Mode    # Off = 0 # PlayerLedBrightness = 1     # UninterrumpableLed = 2  # Both = 3
+        self.outReport[42] = pulse  # Pulse option     # Off = 0     # FadeBlue = 0    # FadeOut = 0
+        self.outReport[43] = brightness  # Brightness    low = 2     # Medium = 1     # High = 0
+        self.outReport[44] = 4 # playernumber value # 4 10 21 27 
+        self.outReport[45] = rgb[0] # Red 0 to 255
+        self.outReport[46] = rgb[1] # Green 0 to 255
+        self.outReport[47] = rgb[2] # Blue 0 to 255
 
     def updateThumbStickPress(self):
         misc = self.data[9]

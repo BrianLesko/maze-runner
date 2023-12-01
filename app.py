@@ -15,20 +15,47 @@ DualSense = dualsense.DualSense
 vendorID = int("0x054C", 16)
 productID = int("0x0CE6", 16)
 
-def dualSenseCanvas():
+def main():
     st.set_page_config(layout='wide')
     gui.clean_format()
-    gui.about(text = "This code implements a simple sketchpad using a dualsense touchpad.")
+    gui.about(text = "This code implements a maze game with a wired ps5 controller, use the touchpad to navigate the maze.")
     Title = st.empty()
+
     ds = DualSense(vendorID,productID)
     ds.connect()
     progress_bar = st.progress(0)
     text = st.empty()
     image_placeholder = st.empty()
+
+    # Create an empty image
     n = 1080-10 # y is 1100 - 10 
     m = 1900-30 # x is 40 - 1900
     pixels = np.ones((n,m))
-    loops = 900
+
+    # Create the maze walls by importing a jpg image
+    maze = plt.imread("maze-01.jpg")
+    from skimage.transform import resize
+    resized_maze = resize(maze, (n, m))
+    maze = resized_maze[:,:,0] # only use the first channel of the image
+    greens = greens = resized_maze[:,:,1]  # only use the second channel of the image
+
+    # Create a list of the maze wall coordinates
+    wall_coordinates = []
+    for i in range(n):
+        for j in range(m):
+            if maze[i][j] == 0:
+                wall_coordinates.append((i,j))
+
+    # Create a list of goal coordinates based on red pixels
+    goal = []
+    for i in range(n):
+        for j in range(m):
+            if greens[i][j] > 0.5 and all(resized_maze[i][j][[0, 2]] < 0.2):  # green color
+                goal.append((i,j))
+
+    pixels = pixels * maze # multiply the maze by the empty image to create the maze walls
+
+    loops = 1000
     pixel_size = 10
     for i in range(loops): 
         ds.receive()
@@ -49,12 +76,30 @@ def dualSenseCanvas():
                     for dy in range(-pixel_size//2 + 1, pixel_size//2 + 1):
                         if 0 <= x1 + dx < n and 0 <= y1 + dy < m:
                             pixels[x1 + dx][y1 + dy] = max(0, pixels[x1 + dx][y1 + dy] - 1)
+
+         # Check if the current touches are on a wall
+        if ds.touchpad_isActive:
+            if (x,y) in wall_coordinates:
+                ds.init_outReport()
+                ds.rumble()
+                ds.lights(rgb=(255,0,0))
+                ds.send_outReport()
+            else:
+                ds.init_outReport()
+                ds.lights(rgb=(0,255,0))
+                ds.send_outReport()
+
+        # Check if the current touch is in the goal
+        if ds.touchpad_isActive:
+            if (x,y) in goal:
+                st.balloons() 
+        
         progress_bar.progress((i + 1)/loops)
         with image_placeholder: st.image(pixels, use_column_width=True)
         time.sleep(.00005)
         progress_bar.progress((i + 1)/loops)
-    with Title: st.title("Your Artwork is finished")
-    st.balloons()
+
+    with Title: st.title("You ran out of Time!")
     # Download your image
     buffer = io.BytesIO()
     plt.imsave(buffer, pixels, cmap='gray', format='png')
@@ -75,4 +120,4 @@ def dualSenseCanvas():
         "---"
     ds.disconnect()
 
-dualSenseCanvas()
+main()
