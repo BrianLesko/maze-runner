@@ -1,0 +1,4 @@
+libusb
+hidapi
+streamlit
+matplotlib
