@@ -1,6 +1,6 @@
 
 # Dualsense Sketchpad 
-This code implements a sketchpad app using a wired Dualsense (PS5) controller. The code is rritten in [Pure Python]() - created for Learning Purposes.
+This code implements a sketchpad app using a wired Dualsense (PS5) controller. The code is rritten in [Pure Python](https://github.com/BrianLesko/maze-runner/blob/main/app.py) - created for Learning Purposes.
 
 
 &nbsp;
@@ -26,7 +26,7 @@ This code uses the following libraries:
 Run the following commands:
 ```
 pip install --upgrade streamlit hidapi matplotlib streamlit
-streamlit run https://raw.githubusercontent.com/BrianLesko/DualSenseCanvas/main/app.py
+streamlit run https://github.com/BrianLesko/maze-runner/blob/main/app.py
 ```
 
 This will start the local Streamlit server, and you can access the chatbot by opening a web browser and navigating to `http://localhost:8501`.
