@@ -5,7 +5,7 @@ This code implements a sketchpad app using a wired Dualsense (PS5) controller. T
 
 &nbsp;
 
-<div align="center"><img src="docs/preview.png" width="800"></div>
+<div align="center"><img src="docs/preview.gif" width="800"></div>
 
 &nbsp;
 
