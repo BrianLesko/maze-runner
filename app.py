@@ -20,7 +20,7 @@ def get_level(filename):
     with st.spinner(text="Importing the level..."): 
         # Create the maze walls by importing a jpg image
         maze = plt.imread(filename)
-        resized_maze=resize(maze, (n, m))[:,:,0] # Resize and only use the red channel
+        resized_maze=resize(maze, (n, m)) # Resize and only use the red channel
         R, G, B = resized_maze[:,:,0], resized_maze[:,:,1], resized_maze[:,:,2]
     with st.spinner(text="Creating walls..."): 
         wall_coordinates=[]   # Wall Coordinates are created from black colors
@@ -31,7 +31,7 @@ def get_level(filename):
                     wall_coordinates.append((i,j))
                 if G[i][j]  > .5 and R[i][j] < .5 and B[i][j] < .5:
                     goal_coordinates.append((i,j))
-    return resized_maze, wall_coordinates, goal_coordinates
+    return resized_maze[:,:,0], wall_coordinates, goal_coordinates
 
 def main():
     gui.clean_format(wide = True)
@@ -43,19 +43,20 @@ def main():
     with st.spinner(text="Connecting to your controller..."): 
         ds = DualSense(vendorID,productID)
         ds.connect()
-        
+
     n, m = 1080-10, 1900-30
-    loops = 1000
+    loops = 1680
     pixel_size = 10
     switch_level = True
     wins = 0
+    lives = 20
     for i in range(loops): 
         if switch_level:
             with Title: st.title("Get ready...")
             if wins == 0: pixels, wall_coordinates, goal_coordinates = get_level("maze-01.jpg")
-            if wins == 1: pixels, wall_coordinates, goal_coordinates = get_level("maze-02.jpg")
-            if wins == 2: pixels, wall_coordinates, goal_coordinates = get_level("maze-02.jpg")
-            with Title: st.title("Hurry, finish the maze!")
+            if wins == 1: pixels, wall_coordinates, goal_coordinates = get_level("maze-02.jpeg")
+            if wins == 2: pixels, wall_coordinates, goal_coordinates = get_level("maze-03.jpg")
+            with Title: st.title("Lvl " + str(wins+1) + ": Hurry, finish the maze!")
             switch_level = False
         ds.receive()
         ds.updateTouchpad(n=1)
@@ -74,25 +75,29 @@ def main():
                             pixels[x + dx][y + dy] = 0 # Set the pixel to black  # Set the pixel to black 
             if (x,y) in wall_coordinates:   # You lose
                 with Title: st.title("Dont touch the walls!")
-                ds.rumble()
                 ds.lights(rgb=(255,0,0))
+                ds.rumble(1)
                 ds.send_outReport()
-
+                time.sleep(.0015)
+                lives = lives - 1
+                if lives == 0: 
+                    with Title: st.title("You ran out of lives!")
+                    return None
             else:
+                ds.rumble(0)
                 ds.lights(rgb=(0,255,0))
                 ds.send_outReport()
             if (x,y) in goal_coordinates:   # You win
                 with Title: st.title("You won!")
-                if wins == 0: st.balloons() 
+                st.balloons() 
                 wins = wins + 1
                 switch_level = True
         
         progress_bar.progress((i + 1)/loops)
         with image_placeholder: st.image(pixels, use_column_width=True)
-        #time.sleep(.00005)
+        time.sleep(.0001)
         progress_bar.progress((i + 1)/loops)
-
-    with Title: st.title("You ran out of Time at level " + str(wins)+1 + "!")
+    with Title: st.title("You ran out of Time!")
     ds.disconnect()
 
 main()
