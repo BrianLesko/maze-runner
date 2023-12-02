@@ -1,6 +1,6 @@
 
-# Dualsense Sketchpad 
-This code implements a sketchpad app using a wired Dualsense (PS5) controller. The code is rritten in [Pure Python]() - created for Learning Purposes.
+# Maze Runner Game
+This code implements a Maze running game using a wired Dualsense (PS5) controller. Use the touchpad as the input. The code is rritten in [Pure Python](https://github.com/BrianLesko/maze-runner/blob/main/app.py) in under 100 lines. Created by Brian Lesko for Learning Purposes.
 
 
 &nbsp;
@@ -26,7 +26,7 @@ This code uses the following libraries:
 Run the following commands:
 ```
 pip install --upgrade streamlit hidapi matplotlib streamlit
-streamlit run https://raw.githubusercontent.com/BrianLesko/DualSenseCanvas/main/app.py
+streamlit run https://github.com/BrianLesko/maze-runner/blob/main/app.py
 ```
 
 This will start the local Streamlit server, and you can access the chatbot by opening a web browser and navigating to `http://localhost:8501`.
@@ -38,9 +38,12 @@ This will start the local Streamlit server, and you can access the chatbot by op
 The app as follows:
 1. The hidapi library is used to initiate a connection to the PS5 controller
 2. The dualsense class is used to decode the received bytes
-3. Streamlit is used to display the decoded bytes from the touchpad
-4. The app stops after a set number of loops
-5. The user can download their artwork
+3. Scikit-learn is used to resize maze images
+4. Streamlit is used to display the decoded bytes from the touchpad
+5. If the touchpad pixel overlaps with a wall, you lose a life
+6. If you reach the goal you make it to the next level
+7. The app stops after a set number of loops
+8. The user can download their artwork
 
 &nbsp;
 
@@ -63,7 +66,7 @@ repository/
 ## Topics 
 ```
 Python | Streamlit | Git | Low Code UI
-Sketchpad | HIDapi | decode bytes | PS5 | Sony | Dualsense | external device | communication 
+External device | HIDapi | decode bytes | PS5 | Sony | Dualsense | communication | Remote control 
 custom classes
 Self taught coding | Mechanical engineer | Robotics engineer
 ```
