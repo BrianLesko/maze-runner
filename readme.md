@@ -1,6 +1,6 @@
 
-# Dualsense Sketchpad 
-This code implements a sketchpad app using a wired Dualsense (PS5) controller. The code is rritten in [Pure Python](https://github.com/BrianLesko/maze-runner/blob/main/app.py) - created for Learning Purposes.
+# Maze Runner Game
+This code implements a Maze running game using a wired Dualsense (PS5) controller. Use the touchpad as the input. The code is rritten in [Pure Python](https://github.com/BrianLesko/maze-runner/blob/main/app.py) in under 100 lines. Created by Brian Lesko for Learning Purposes.
 
 
 &nbsp;
@@ -66,7 +66,7 @@ repository/
 ## Topics 
 ```
 Python | Streamlit | Git | Low Code UI
-Sketchpad | HIDapi | decode bytes | PS5 | Sony | Dualsense | external device | communication 
+External device | HIDapi | decode bytes | PS5 | Sony | Dualsense | communication | Remote control 
 custom classes
 Self taught coding | Mechanical engineer | Robotics engineer
 ```
